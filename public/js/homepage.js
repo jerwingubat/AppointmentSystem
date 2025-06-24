@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     professorCards.forEach(card => {
         card.addEventListener('click', function() {
+            // Skip if professor is busy
+            if (this.querySelector('.status-busy')) return;
+            
             // Remove selected class from all cards
             professorCards.forEach(c => c.classList.remove('selected'));
             
@@ -27,11 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const step1Content = document.getElementById('step1-content');
     const step2Content = document.getElementById('step2-content');
     const step3Content = document.getElementById('step3-content');
-    const confirmationContent = document.getElementById('confirmation-content');
+    const step4Content = document.getElementById('step4-content');
     
     const step1Indicator = document.getElementById('step1-indicator');
     const step2Indicator = document.getElementById('step2-indicator');
     const step3Indicator = document.getElementById('step3-indicator');
+    const step4Indicator = document.getElementById('step4-indicator');
     
     // Initialize calendar
     initializeCalendar();
@@ -76,10 +80,26 @@ document.addEventListener('DOMContentLoaded', function() {
         step2Indicator.classList.remove('completed');
     });
     
-    // Confirm booking
-    document.getElementById('confirm-booking').addEventListener('click', function() {
+    // Step 3 to Step 4 (Complete Booking)
+    document.getElementById('step3-next').addEventListener('click', function() {
+        // Validate form
+        const studentName = document.getElementById('student-name').value;
+        const studentId = document.getElementById('student-id').value;
+        
+        if (!studentName || !studentId) {
+            alert('Please provide your name and student ID');
+            return;
+        }
+        
         step3Content.classList.remove('active');
-        confirmationContent.classList.add('active');
+        step4Content.classList.add('active');
+        
+        step3Indicator.classList.remove('active');
+        step3Indicator.classList.add('completed');
+        step4Indicator.classList.add('active');
+        
+        // Set confirmation name
+        document.getElementById('confirmation-name').textContent = studentName;
         
         // Simulate processing
         setTimeout(function() {
@@ -92,17 +112,25 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('new-booking').addEventListener('click', function() {
         // Reset the form
         professorCards.forEach(c => c.classList.remove('selected'));
+        document.getElementById('student-name').value = '';
+        document.getElementById('student-id').value = '';
+        document.getElementById('student-email').value = '';
         step1NextBtn.disabled = true;
         document.getElementById('step2-next').disabled = true;
+        
+        // Reset calendar to today
+        const currentDate = new Date();
+        renderCalendar(currentDate);
         
         // Reset indicators
         step1Indicator.classList.remove('completed');
         step2Indicator.classList.remove('completed', 'active');
-        step3Indicator.classList.remove('active');
+        step3Indicator.classList.remove('completed', 'active');
+        step4Indicator.classList.remove('active');
         step1Indicator.classList.add('active');
         
         // Show step 1
-        confirmationContent.classList.remove('active');
+        step4Content.classList.remove('active');
         step1Content.classList.add('active');
         
         // Reset confirmation
@@ -161,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentDate = new Date();
         
         // For demo purposes, mark some days as having availability
-        const daysWithAvailability = [5, 8, 12, 15, 19, 22, 26];
+        const daysWithAvailability = [today.getDate()]; // Only show today as available for walk-ins
         
         for (let i = 1; i <= daysInMonth; i++) {
             const dayElement = document.createElement('div');
@@ -217,10 +245,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateSelectedDate(day, month, year) {
         const date = new Date(year, month, day);
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const formattedDate = date.toLocaleDateString('en-US', options);
-        document.getElementById('selected-date').textContent = formattedDate;
-        document.getElementById('confirm-date').textContent = formattedDate;
+        const today = new Date();
+        
+        if (date.toDateString() === today.toDateString()) {
+            document.getElementById('selected-date').textContent = "Today";
+            document.getElementById('confirm-date').textContent = "Today";
+        } else {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = date.toLocaleDateString('en-US', options);
+            document.getElementById('selected-date').textContent = formattedDate;
+            document.getElementById('confirm-date').textContent = formattedDate;
+        }
     }
     
     // Time slot selection
