@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             })
             .then(() => {
-                alert("Account created successfully with Base64 profile picture stored in Firestore!");
+                alert("Account created successfully!");
                 window.location.href = "/index.html";
             })
             .catch((error) => {
