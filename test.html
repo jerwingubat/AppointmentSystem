@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Test Firebase</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h1>Hello Firebase</h1>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "test",
+      authDomain: "test.firebaseapp.com",
+      projectId: "test",
+    };
+    
+    console.log("firebase:", typeof firebase); // <-- Should print 'object'
+
+    firebase.initializeApp(firebaseConfig);
+    console.log("App initialized");
+  </script>
+</body>
+</html>

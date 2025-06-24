@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up | YourApp</title>
-    <link rel="stylesheet" href="/public/css/signup.css">
+    <link rel="stylesheet" href="css/signup.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        
-    </style>
+    
 </head>
 <body>
     <div class="auth-container">
@@ -18,7 +16,7 @@
         </div>
         
         <div class="auth-body">
-            <form action="/signup" method="POST">
+            <form id="signup-form">
                 <div class="name-fields">
                     <div class="form-group">
                         <label for="first-name">First Name</label>
@@ -61,6 +59,10 @@
             </div>
         </div>
     </div>
-    <script src="public/js/signup.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics-compat.js"></script>
+    <script src="js/signup.js" defer></script>
 </body>
 </html>
