@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professor Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel = "stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-chalkboard-teacher"></i> <span>Professor Dashboard</span></h2>
+        </div>
+
+        <div class="professor-info">
+            <div class="professor-avatar">RJ</div>
+            <div class="professor-details">
+                <h3>Dr. Robert Johnson</h3>
+                <p>Computer Science</p>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="#" class="nav-link active">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-sliders-h"></i>
+                <span>Settings</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-question-circle"></i>
+                <span>Help & Support</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h1>Professor Dashboard</h1>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="user-menu">
+                    <div class="notification">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="user-avatar">RJ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="dashboard-cards">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Upcoming Appointments</div>
+                    <div class="card-icon icon-blue">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                </div>
+                <div class="card-value">8</div>
+                <div class="card-subtitle">Appointments scheduled</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Pending Requests</div>
+                    <div class="card-icon icon-orange">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="card-value">3</div>
+                <div class="card-subtitle">Requests to review</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Today's Appointments</div>
+                    <div class="card-icon icon-green">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="card-value">4</div>
+                <div class="card-subtitle">Students to meet today</div>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="status-card">
+            <div class="status-header">
+                <div class="status-title">Set Your Availability</div>
+            </div>
+
+            <div class="status-options">
+                <button class="status-btn status-available active">Available</button>
+                <button class="status-btn status-busy">Busy</button>
+                <button class="status-btn status-away">Away</button>
+            </div>
+
+            <div class="status-message">
+                <label>Status Message (Optional)</label>
+                <textarea rows="3"
+                    placeholder="Add a custom status message (e.g., 'In a meeting until 2 PM')"></textarea>
+                <button class="save-status">Save Status</button>
+            </div>
+        </div>
+
+        <!-- Appointments Table -->
+        <div class="appointments-table">
+            <div class="table-header">
+                <div class="table-title">Upcoming Appointments</div>
+                <div class="filter-options">
+                    <button class="filter-btn active">All</button>
+                    <button class="filter-btn">Today</button>
+                    <button class="filter-btn">Upcoming</button>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Time</th>
+                        <th>Purpose</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="student-info">
+                                <div class="student-avatar">JD</div>
+                                <div>
+                                    <div class="student-name">John Doe</div>
+                                    <div class="student-id">ID: A12345678</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="appointment-time">10:00 AM</div>
+                            <div class="appointment-date">June 15, 2023</div>
+                        </td>
+                        <td>
+                            <span class="appointment-purpose">Project Help</span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-scheduled">Scheduled</span>
+                        </td>
+                        <td>
+                            <button class="action-btn"><i class="fas fa-check"></i></button>
+                            <button class="action-btn"><i class="fas fa-times"></i></button>
+                            <button class="action-btn"><i class="fas fa-comment"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="student-info">
+                                <div class="student-avatar">SA</div>
+                                <div>
+                                    <div class="student-name">Sarah Anderson</div>
+                                    <div class="student-id">ID: A23456789</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="appointment-time">11:30 AM</div>
+                            <div class="appointment-date">June 15, 2023</div>
+                        </td>
+                        <td>
+                            <span class="appointment-purpose">Research Discussion</span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-scheduled">Scheduled</span>
+                        </td>
+                        <td>
+                            <button class="action-btn"><i class="fas fa-check"></i></button>
+                            <button class="action-btn"><i class="fas fa-times"></i></button>
+                            <button class="action-btn"><i class="fas fa-comment"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="student-info">
+                                <div class="student-avatar">MB</div>
+                                <div>
+                                    <div class="student-name">Michael Brown</div>
+                                    <div class="student-id">ID: A34567890</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="appointment-time">2:00 PM</div>
+                            <div class="appointment-date">June 15, 2023</div>
+                        </td>
+                        <td>
+                            <span class="appointment-purpose">Course Advice</span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-scheduled">Scheduled</span>
+                        </td>
+                        <td>
+                            <button class="action-btn"><i class="fas fa-check"></i></button>
+                            <button class="action-btn"><i class="fas fa-times"></i></button>
+                            <button class="action-btn"><i class="fas fa-comment"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="student-info">
+                                <div class="student-avatar">EW</div>
+                                <div>
+                                    <div class="student-name">Emily Wilson</div>
+                                    <div class="student-id">ID: A45678901</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="appointment-time">3:30 PM</div>
+                            <div class="appointment-date">June 15, 2023</div>
+                        </td>
+                        <td>
+                            <span class="appointment-purpose">Thesis Review</span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-scheduled">Scheduled</span>
+                        </td>
+                        <td>
+                            <button class="action-btn"><i class="fas fa-check"></i></button>
+                            <button class="action-btn"><i class="fas fa-times"></i></button>
+                            <button class="action-btn"><i class="fas fa-comment"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="student-info">
+                                <div class="student-avatar">DC</div>
+                                <div>
+                                    <div class="student-name">David Chen</div>
+                                    <div class="student-id">ID: A56789012</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="appointment-time">10:00 AM</div>
+                            <div class="appointment-date">June 16, 2023</div>
+                        </td>
+                        <td>
+                            <span class="appointment-purpose">Internship Advice</span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-scheduled">Scheduled</span>
+                        </td>
+                        <td>
+                            <button class="action-btn"><i class="fas fa-check"></i></button>
+                            <button class="action-btn"><i class="fas fa-times"></i></button>
+                            <button class="action-btn"><i class="fas fa-comment"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics-compat.js"></script>
+    <script src="js/dashboard.js" defer></script>
+</body>
+
+</html>

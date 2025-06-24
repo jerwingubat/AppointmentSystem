@@ -1,282 +1,307 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Step 1: Select Professor
-    const professorCards = document.querySelectorAll('.professor-card');
-    const step1NextBtn = document.getElementById('step1-next');
-    let selectedProfessorId = null;
-    
-    professorCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // Skip if professor is busy
-            if (this.querySelector('.status-busy')) return;
-            
-            // Remove selected class from all cards
-            professorCards.forEach(c => c.classList.remove('selected'));
-            
-            // Add selected class to clicked card
-            this.classList.add('selected');
-            selectedProfessorId = this.getAttribute('data-professor-id');
-            
-            // Enable next button
-            step1NextBtn.disabled = false;
-            
-            // Store professor name for later steps
-            const professorName = this.querySelector('.professor-name').textContent;
-            document.getElementById('selected-professor-name').textContent = professorName;
-            document.getElementById('confirm-professor').textContent = professorName;
-        });
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyBRIyuxDhndABeMJng-fJRZJPaX_R7g7O8",
+    authDomain: "appointment-system-6d7a5.firebaseapp.com",
+    projectId: "appointment-system-6d7a5",
+    storageBucket: "appointment-system-6d7a5.appspot.com",
+    messagingSenderId: "764916211566",
+    appId: "1:764916211566:web:551c88b55cba38ba446b7f",
+    measurementId: "G-PF964W9HCQ"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+let selectedProfessorId = null;
+let selectedProfessorName = "";
+let selectedDate = "";
+let selectedTime = "";
+
+// On DOM Load
+document.addEventListener("DOMContentLoaded", () => {
+    loadProfessors();
+    generateCalendar(new Date());
+    enableTimeSlotSelection();
+
+    // Step 1: Next
+    document.getElementById("step1-next").addEventListener("click", () => {
+        if (selectedProfessorId) {
+            document.getElementById("step1-content").classList.remove("active");
+            document.getElementById("step2-content").classList.add("active");
+            document.getElementById("selected-professor-name").textContent = selectedProfessorName;
+        }
     });
-    
-    // Step navigation
-    const step1Content = document.getElementById('step1-content');
-    const step2Content = document.getElementById('step2-content');
-    const step3Content = document.getElementById('step3-content');
-    const step4Content = document.getElementById('step4-content');
-    
-    const step1Indicator = document.getElementById('step1-indicator');
-    const step2Indicator = document.getElementById('step2-indicator');
-    const step3Indicator = document.getElementById('step3-indicator');
-    const step4Indicator = document.getElementById('step4-indicator');
-    
-    // Initialize calendar
-    initializeCalendar();
-    
-    // Step 1 to Step 2
-    step1NextBtn.addEventListener('click', function() {
-        step1Content.classList.remove('active');
-        step2Content.classList.add('active');
-        
-        step1Indicator.classList.remove('active');
-        step1Indicator.classList.add('completed');
-        step2Indicator.classList.add('active');
+
+    // Step 2: Next
+    document.getElementById("step2-next").addEventListener("click", () => {
+        if (selectedDate && selectedTime) {
+            document.getElementById("step2-content").classList.remove("active");
+            document.getElementById("step3-content").classList.add("active");
+            document.getElementById("confirm-professor").textContent = selectedProfessorName;
+            document.getElementById("confirm-date").textContent = selectedDate;
+            document.getElementById("confirm-time").textContent = selectedTime;
+        } else {
+            alert("Please select a date and time.");
+        }
     });
-    
-    // Step 2 to Step 1
-    document.getElementById('step2-back').addEventListener('click', function() {
-        step2Content.classList.remove('active');
-        step1Content.classList.add('active');
-        
-        step2Indicator.classList.remove('active');
-        step1Indicator.classList.add('active');
-        step1Indicator.classList.remove('completed');
-    });
-    
-    // Step 2 to Step 3
-    document.getElementById('step2-next').addEventListener('click', function() {
-        step2Content.classList.remove('active');
-        step3Content.classList.add('active');
-        
-        step2Indicator.classList.remove('active');
-        step2Indicator.classList.add('completed');
-        step3Indicator.classList.add('active');
-    });
-    
-    // Step 3 to Step 2
-    document.getElementById('step3-back').addEventListener('click', function() {
-        step3Content.classList.remove('active');
-        step2Content.classList.add('active');
-        
-        step3Indicator.classList.remove('active');
-        step2Indicator.classList.add('active');
-        step2Indicator.classList.remove('completed');
-    });
-    
-    // Step 3 to Step 4 (Complete Booking)
-    document.getElementById('step3-next').addEventListener('click', function() {
-        // Validate form
-        const studentName = document.getElementById('student-name').value;
-        const studentId = document.getElementById('student-id').value;
-        
-        if (!studentName || !studentId) {
-            alert('Please provide your name and student ID');
+
+    // Step 3: Complete Booking
+    document.getElementById("step3-next").addEventListener("click", () => {
+        const studentName = document.getElementById("student-name").value;
+        const studentID = document.getElementById("student-id").value;
+        const studentEmail = document.getElementById("student-email").value;
+        const appointmentPurpose = document.getElementById("appointment-purpose").value;
+
+        if (!studentName || !studentID || !selectedDate || !selectedTime) {
+            alert("Please complete all required fields.");
             return;
         }
-        
-        step3Content.classList.remove('active');
-        step4Content.classList.add('active');
-        
-        step3Indicator.classList.remove('active');
-        step3Indicator.classList.add('completed');
-        step4Indicator.classList.add('active');
-        
-        // Set confirmation name
-        document.getElementById('confirmation-name').textContent = studentName;
-        
-        // Simulate processing
-        setTimeout(function() {
-            document.querySelector('.loading').classList.add('hidden');
-            document.querySelector('.confirmation-success').classList.remove('hidden');
-        }, 2000);
+
+        const appointmentData = {
+            studentName,
+            studentID,
+            email: studentEmail,
+            purpose: appointmentPurpose,
+            date: selectedDate,
+            time: selectedTime,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        saveAppointment(selectedProfessorId, appointmentData);
     });
-    
-    // New booking
-    document.getElementById('new-booking').addEventListener('click', function() {
-        // Reset the form
-        professorCards.forEach(c => c.classList.remove('selected'));
-        document.getElementById('student-name').value = '';
-        document.getElementById('student-id').value = '';
-        document.getElementById('student-email').value = '';
-        step1NextBtn.disabled = true;
-        document.getElementById('step2-next').disabled = true;
-        
-        // Reset calendar to today
-        const currentDate = new Date();
-        renderCalendar(currentDate);
-        
-        // Reset indicators
-        step1Indicator.classList.remove('completed');
-        step2Indicator.classList.remove('completed', 'active');
-        step3Indicator.classList.remove('completed', 'active');
-        step4Indicator.classList.remove('active');
-        step1Indicator.classList.add('active');
-        
-        // Show step 1
-        step4Content.classList.remove('active');
-        step1Content.classList.add('active');
-        
-        // Reset confirmation
-        document.querySelector('.loading').classList.remove('hidden');
-        document.querySelector('.confirmation-success').classList.add('hidden');
+
+    // Step 2: Back
+    document.getElementById("step2-back").addEventListener("click", () => {
+        document.getElementById("step2-content").classList.remove("active");
+        document.getElementById("step1-content").classList.add("active");
     });
-    
-    // Calendar functionality
-    function initializeCalendar() {
-        const currentDate = new Date();
-        renderCalendar(currentDate);
-        
-        // Previous month button
-        document.getElementById('prev-month').addEventListener('click', function() {
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            renderCalendar(currentDate);
-        });
-        
-        // Next month button
-        document.getElementById('next-month').addEventListener('click', function() {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            renderCalendar(currentDate);
-        });
-    }
-    
-    function renderCalendar(date) {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        
-        // Set month title
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-                           "July", "August", "September", "October", "November", "December"];
-        document.getElementById('current-month').textContent = `${monthNames[month]} ${year}`;
-        
-        // Get first day of month and total days
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        // Get days from previous month
-        const prevMonthDays = new Date(year, month, 0).getDate();
-        
-        // Clear calendar
-        const calendarDays = document.getElementById('calendar-days');
-        calendarDays.innerHTML = '';
-        
-        // Add days from previous month
-        for (let i = firstDay - 1; i >= 0; i--) {
-            const dayElement = document.createElement('div');
-            dayElement.className = 'calendar-day disabled';
-            dayElement.textContent = prevMonthDays - i;
-            calendarDays.appendChild(dayElement);
-        }
-        
-        // Add days from current month
-        const today = new Date();
-        const currentDate = new Date();
-        
-        // For demo purposes, mark some days as having availability
-        const daysWithAvailability = [today.getDate()]; // Only show today as available for walk-ins
-        
-        for (let i = 1; i <= daysInMonth; i++) {
-            const dayElement = document.createElement('div');
-            dayElement.className = 'calendar-day';
-            dayElement.textContent = i;
-            
-            // Mark today
-            if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                dayElement.classList.add('selected');
-                updateSelectedDate(i, month, year);
-            }
-            
-            // Mark days with availability (for demo)
-            if (daysWithAvailability.includes(i)) {
-                dayElement.classList.add('has-availability');
-            }
-            
-            // Add click event
-            dayElement.addEventListener('click', function() {
-                if (!this.classList.contains('disabled')) {
-                    // Remove selected from all days
-                    document.querySelectorAll('.calendar-day').forEach(day => {
-                        day.classList.remove('selected');
-                    });
-                    
-                    // Add selected to clicked day
-                    this.classList.add('selected');
-                    
-                    // Update selected date display
-                    updateSelectedDate(i, month, year);
-                    
-                    // Enable next button if time slot is selected
-                    const timeSlotSelected = document.querySelector('.time-slot.selected');
-                    document.getElementById('step2-next').disabled = !timeSlotSelected;
-                }
-            });
-            
-            calendarDays.appendChild(dayElement);
-        }
-        
-        // Calculate total cells added so far
-        const totalCells = firstDay + daysInMonth;
-        const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
-        
-        // Add days from next month
-        for (let i = 1; i <= remainingCells; i++) {
-            const dayElement = document.createElement('div');
-            dayElement.className = 'calendar-day disabled';
-            dayElement.textContent = i;
-            calendarDays.appendChild(dayElement);
-        }
-    }
-    
-    function updateSelectedDate(day, month, year) {
-        const date = new Date(year, month, day);
-        const today = new Date();
-        
-        if (date.toDateString() === today.toDateString()) {
-            document.getElementById('selected-date').textContent = "Today";
-            document.getElementById('confirm-date').textContent = "Today";
-        } else {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const formattedDate = date.toLocaleDateString('en-US', options);
-            document.getElementById('selected-date').textContent = formattedDate;
-            document.getElementById('confirm-date').textContent = formattedDate;
-        }
-    }
-    
-    // Time slot selection
-    const timeSlotsGrid = document.getElementById('time-slots-grid');
-    const step2NextBtn = document.getElementById('step2-next');
-    
-    timeSlotsGrid.addEventListener('click', function(e) {
-        if (e.target.classList.contains('time-slot') && !e.target.classList.contains('booked')) {
-            // Remove selected from all time slots
-            document.querySelectorAll('.time-slot').forEach(slot => {
-                slot.classList.remove('selected');
-            });
-            
-            // Add selected to clicked time slot
-            e.target.classList.add('selected');
-            
-            // Update confirmation time
-            document.getElementById('confirm-time').textContent = e.target.textContent;
-            
-            // Enable next button
-            step2NextBtn.disabled = false;
-        }
+
+    // Step 3: Back
+    document.getElementById("step3-back").addEventListener("click", () => {
+        document.getElementById("step3-content").classList.remove("active");
+        document.getElementById("step2-content").classList.add("active");
+    });
+
+    // New Booking
+    document.getElementById("new-booking").addEventListener("click", () => {
+        location.reload();
     });
 });
+
+// Load All Users from Firestore (Even if not professors)
+function loadProfessors() {
+    const professorGrid = document.getElementById('professor-grid');
+    professorGrid.innerHTML = '<p>Loading users...</p>';
+
+    db.collection("users").get()
+        .then((snapshot) => {
+            professorGrid.innerHTML = '';
+            if (snapshot.empty) {
+                professorGrid.innerHTML = '<p>No professors found.</p>';
+                return;
+            }
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const card = createProfessorCard(doc.id, data);
+                professorGrid.appendChild(card);
+            });
+        })
+        .catch((error) => {
+            console.error("Error loading users:", error);
+            professorGrid.innerHTML = '<p>Error loading users.</p>';
+        });
+}
+
+function createProfessorCard(id, data) {
+    const card = document.createElement('div');
+    card.classList.add('professor-card');
+    card.setAttribute('data-professor-id', id);
+
+    const imageBase64 = data.profilePicBase64 || 'default-profile.png';
+    const imageUrl = imageBase64.startsWith('data:image') ? imageBase64 : 'default-profile.png';
+
+    const name = `${data.firstName || 'No'} ${data.lastName || 'Name'}`;
+    const department = data.department || 'Unknown Department';
+    const status = data.status || 'Unavailable';
+
+    let statusClass = 'status-unavailable';
+    let statusText = '● Unavailable';
+    let isAvailable = false;
+
+    if (status.toLowerCase() === 'available') {
+        statusClass = 'status-available';
+        statusText = '● Available Now';
+        isAvailable = true;
+    } else if (status.toLowerCase() === 'busy' || status.toLowerCase() === 'in meeting') {
+        statusClass = 'status-busy';
+        statusText = '● Busy';
+    }
+
+    card.innerHTML = `
+        <div class="professor-image" style="background-image: url('${imageUrl}');"></div>
+        <div class="professor-info">
+            <div class="professor-name">${name}</div>
+            <div class="professor-department">${department}</div>
+            <div class="professor-status ${statusClass}">${statusText}</div>
+        </div>
+    `;
+
+    // Only add click listener if professor is available
+    if (isAvailable) {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.professor-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedProfessorId = id;
+            selectedProfessorName = name;
+            document.getElementById("step1-next").disabled = false;
+        });
+    } else {
+        // Visually disable card to indicate unclickable
+        card.style.opacity = '0.6';
+        card.style.cursor = 'not-allowed';
+    }
+
+    return card;
+}
+
+// Calendar Generation
+function generateCalendar(date) {
+    const calendarDays = document.getElementById('calendar-days');
+    const currentMonth = document.getElementById('current-month');
+    const prevMonth = document.getElementById('prev-month');
+    const nextMonth = document.getElementById('next-month');
+
+    let year = date.getFullYear();
+    let month = date.getMonth();
+
+    // Calendar setup
+    let currentDate = new Date();
+    let selectedDay = null;
+
+    function renderCalendar() {
+        const calendarDays = document.getElementById('calendar-days');
+        const currentMonthElem = document.getElementById('current-month');
+        calendarDays.innerHTML = ''; // clear previous days
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Set Month Title
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+        currentMonthElem.textContent = `${monthNames[month]} ${year}`;
+
+        // Blank days before 1st
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            const blankDay = document.createElement('div');
+            blankDay.classList.add('calendar-day', 'disabled');
+            calendarDays.appendChild(blankDay);
+        }
+
+        // Actual days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElem = document.createElement('div');
+            dayElem.classList.add('calendar-day');
+            dayElem.textContent = day;
+
+            // Disable past days
+            const today = new Date();
+            const thisDate = new Date(year, month, day);
+            if (thisDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+                dayElem.classList.add('disabled');
+            } else {
+                // Make clickable
+                dayElem.addEventListener('click', () => {
+                    document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+                    dayElem.classList.add('selected');
+                    selectedDate = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                    document.getElementById('selected-date').textContent = selectedDate;
+                    document.getElementById('step2-next').disabled = false; // enable Next button
+                });
+            }
+
+            // Append day
+            calendarDays.appendChild(dayElem);
+        }
+    }
+
+    // Navigation buttons
+    document.getElementById('prev-month').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    });
+    document.getElementById('next-month').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    });
+
+    // Run on load
+    document.addEventListener('DOMContentLoaded', renderCalendar);
+
+
+    renderCalendar();
+
+    prevMonth.addEventListener('click', () => {
+        month--;
+        if (month < 0) { month = 11; year--; }
+        renderCalendar();
+    });
+
+    nextMonth.addEventListener('click', () => {
+        month++;
+        if (month > 11) { month = 0; year++; }
+        renderCalendar();
+    });
+}
+
+// Enable Time Slot Clicking
+function enableTimeSlotSelection() {
+    document.querySelectorAll('.time-slot.available').forEach(slot => {
+        slot.addEventListener('click', () => {
+            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+            slot.classList.add('selected');
+            selectedTime = slot.getAttribute('data-time');
+            document.getElementById("step2-next").disabled = false;
+        });
+    });
+}
+function saveAppointment(professorId, appointmentData) {
+    const appointmentsRef = db.collection("users").doc(professorId).collection("appointments");
+
+    // Query to check for existing bookings at this date and time
+    appointmentsRef
+        .where("date", "==", appointmentData.date)
+        .where("time", "==", appointmentData.time)
+        .get()
+        .then((querySnapshot) => {
+            if (querySnapshot.size >= 3) {
+                // Already 3 or more bookings for this slot
+                alert("Sorry, this time slot is fully booked. Please select another time.");
+                return;
+            }
+
+            // Otherwise, proceed to save
+            appointmentsRef.add(appointmentData)
+                .then((docRef) => {
+                    console.log("Appointment saved with ID:", docRef.id);
+                    document.getElementById("step3-content").classList.remove("active");
+                    document.getElementById("step4-content").classList.add("active");
+                    document.getElementById("confirmation-name").textContent = appointmentData.studentName;
+                    document.querySelector(".confirmation-success").classList.remove("hidden");
+                })
+                .catch((error) => {
+                    console.error("Error adding appointment:", error);
+                    alert("Error saving appointment.");
+                });
+        })
+        .catch((error) => {
+            console.error("Error checking existing appointments:", error);
+            alert("Error checking booking slot availability.");
+        });
+}
+

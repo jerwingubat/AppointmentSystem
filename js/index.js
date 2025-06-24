@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then((userCredential) => {
                 const user = userCredential.user;
                 alert(`Welcome back, ${user.displayName || user.email}!`);
-                window.location.href = "dashboard.html"; // Change to your target page
+                window.location.href = "dashboard.html";
             })
             .catch((error) => {
                 console.error("Login error:", error);

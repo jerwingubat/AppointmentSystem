@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DCS Booking System</title>
-    <link rel="stylesheet" href="/public/css/homepage.css">
+    <link rel="stylesheet" href="css/homepage.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         
@@ -124,10 +124,10 @@
                         <!-- Time slots will be loaded here -->
                         <div class="time-slot available" data-time="09:00">9:00 AM</div>
                         <div class="time-slot available" data-time="10:00">10:00 AM</div>
-                        <div class="time-slot booked" data-time="11:00">11:00 AM</div>
+                        <div class="time-slot available" data-time="11:00">11:00 AM</div>
                         <div class="time-slot available" data-time="13:00">1:00 PM</div>
                         <div class="time-slot available" data-time="14:00">2:00 PM</div>
-                        <div class="time-slot booked" data-time="15:00">3:00 PM</div>
+                        <div class="time-slot available" data-time="15:00">3:00 PM</div>
                     </div>
                 </div>
                 
@@ -243,6 +243,10 @@
     <footer>
         <p>© 2025 Jerwin Gubat | Department of Computer Studies</p>
     </footer>
-    <script src="/public/js/homepage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics-compat.js"></script>
+    <script src="js/homepage.js"></script>
 </body>
 </html>

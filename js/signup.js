@@ -2,20 +2,41 @@ const firebaseConfig = {
     apiKey: "AIzaSyBRIyuxDhndABeMJng-fJRZJPaX_R7g7O8",
     authDomain: "appointment-system-6d7a5.firebaseapp.com",
     projectId: "appointment-system-6d7a5",
-    storageBucket: "appointment-system-6d7a5.firebasestorage.app",
+    storageBucket: "appointment-system-6d7a5.appspot.com", // Not used here
     messagingSenderId: "764916211566",
     appId: "1:764916211566:web:551c88b55cba38ba446b7f",
     measurementId: "G-PF964W9HCQ"
 };
-// Initialize Firebase (Compat way)
-firebase.initializeApp(firebaseConfig);
+
+const app = firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-console.log("Firebase initialized:", firebase);
+let base64Image = ""; // Base64 image string to store in Firestore
 
 document.addEventListener("DOMContentLoaded", () => {
     const signupForm = document.getElementById("signup-form");
+    const profilePicInput = document.getElementById("profile-pic");
+    const fileChosen = document.getElementById("file-chosen");
+    const preview = document.getElementById("preview");
+
+    profilePicInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+            fileChosen.textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                base64Image = e.target.result; // Store Base64 string
+                preview.src = base64Image;
+                preview.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        } else {
+            fileChosen.textContent = "No file chosen";
+            preview.style.display = "none";
+        }
+    });
 
     signupForm.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -31,48 +52,34 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        if (!base64Image) {
+            alert("Please select a profile picture.");
+            return;
+        }
+
         auth.createUserWithEmailAndPassword(email, password)
             .then((userCredential) => {
                 const user = userCredential.user;
 
-                // Update display name in Firebase Auth
-                return user.updateProfile({
-                    displayName: `${firstName} ${lastName}`
-                }).then(() => {
-                    // Save user details in Firestore
-                    return db.collection('users').doc(user.uid).set({
-                        uid: user.uid,
-                        firstName: firstName,
-                        lastName: lastName,
-                        email: email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                // Note: Skipping user.updateProfile() to avoid 'photoURL too long' error
+
+                // Save user info including Base64 profile picture in Firestore
+                return db.collection('users').doc(user.uid).set({
+                    uid: user.uid,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    profilePicBase64: base64Image, // store Base64 string here
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             })
             .then(() => {
-                alert("Account created and user data stored in Firestore!");
-                window.location.href = "/index.html"; // redirect if needed
+                alert("Account created successfully with Base64 profile picture stored in Firestore!");
+                window.location.href = "/index.html"; // redirect to your desired page
             })
             .catch((error) => {
-                alert(`Error: ${error.message}`);
-                console.error(error);
+                console.error("Signup Error:", error);
+                alert("Error: " + error.message);
             });
-    });
-
-    // Password strength meter
-    const passwordInput = document.getElementById("password");
-    const strengthMeter = document.getElementById("strength-meter");
-
-    passwordInput.addEventListener("input", () => {
-        const val = passwordInput.value;
-        let strength = 0;
-
-        if (val.length >= 6) strength++;
-        if (/[A-Z]/.test(val)) strength++;
-        if (/[0-9]/.test(val)) strength++;
-        if (/[^A-Za-z0-9]/.test(val)) strength++;
-
-        strengthMeter.style.width = `${(strength / 4) * 100}%`;
-        strengthMeter.style.backgroundColor = ["red", "orange", "gold", "green"][strength - 1] || "transparent";
     });
 });

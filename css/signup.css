@@ -162,3 +162,23 @@ body {
     color: var(--primary);
     text-decoration: none;
 }
+
+#file-chosen {
+    margin-left: 10px;
+    font-size: 0.9em;
+    color: #666;
+}
+.custom-file-upload {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #4A90E2;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.custom-file-upload:hover {
+    background-color: #357ABD;
+}
