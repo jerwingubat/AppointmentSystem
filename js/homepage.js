@@ -1,4 +1,3 @@
-// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyBRIyuxDhndABeMJng-fJRZJPaX_R7g7O8",
     authDomain: "appointment-system-6d7a5.firebaseapp.com",
@@ -9,7 +8,6 @@ const firebaseConfig = {
     measurementId: "G-PF964W9HCQ"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -113,15 +111,27 @@ function createProfessorCard(id, data) {
     const name = `${data.firstName || 'No'} ${data.lastName || 'Name'}`;
     const department = data.department || 'Unknown Department';
     const status = data.status || 'Unavailable';
+    const statusCustom = data.statusMessage;
 
     let statusClass = 'status-unavailable';
-    let statusText = '● Unavailable';
+    let statusText = `● ${status}`;
     let isAvailable = false;
 
-    if (status.toLowerCase() === 'available') {
+    const normalizedStatus = status.toLowerCase();
+
+    if (normalizedStatus === 'available') {
         statusClass = 'status-available';
         statusText = '● Available Now';
         isAvailable = true;
+    } else if (normalizedStatus === 'busy') {
+        statusClass = 'status-busy';
+        statusText = '● Busy';
+    } else if (normalizedStatus === 'away') {
+        statusClass = 'status-away';
+        statusText = '● Away';
+    } else {
+        statusClass = 'status-unavailable';
+        statusText = `● ${status}`;
     }
 
     card.innerHTML = `
@@ -130,6 +140,7 @@ function createProfessorCard(id, data) {
             <div class="professor-name">${name}</div>
             <div class="professor-department">${department}</div>
             <div class="professor-status ${statusClass}">${statusText}</div>
+            ${statusCustom ? `<div class="professor-status-message">🛈 ${statusCustom}</div>` : ''}
         </div>
     `;
 
@@ -249,44 +260,75 @@ function enableTimeSlotSelection() {
     });
 }
 
+function getEstimatedWaitTime(position) {
+    const avgTimePerPerson = 10; // in minutes
+    const wait = (position - 1) * avgTimePerPerson;
+    return `${wait}-${wait + avgTimePerPerson} minutes`;
+}
+
+function generateConfirmationNumber() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return `DCS-${result}`;
+}
+
 function saveAppointment(professorId, appointmentData) {
-    // Show spinner when booking starts
     document.getElementById("loading-spinner").classList.remove("hidden");
 
     const appointmentsRef = db.collection("users").doc(professorId).collection("appointments");
 
-    // Query to check for existing bookings at this date and time
+    const confirmationNumber = generateConfirmationNumber();
+
     appointmentsRef
         .where("date", "==", appointmentData.date)
         .where("time", "==", appointmentData.time)
+        .orderBy("timestamp", "asc")
         .get()
         .then((querySnapshot) => {
-            if (querySnapshot.size >= 3) {
+            const currentCount = querySnapshot.size;
+
+            if (currentCount >= MAX_SLOTS_PER_TIME) {
                 alert("Sorry, this time slot is fully booked. Please select another time.");
-                document.getElementById("loading-spinner").classList.add("hidden"); // Hide spinner on error
+                document.getElementById("loading-spinner").classList.add("hidden");
                 return;
             }
+            const queuePosition = currentCount + 1;
+            appointmentData.confirmationNumber = confirmationNumber;
+            appointmentData.queueNumber = queuePosition;
+            appointmentData.confirmed = true;
 
-            // Proceed to save
             appointmentsRef.add(appointmentData)
                 .then((docRef) => {
                     console.log("Appointment saved with ID:", docRef.id);
+
                     document.getElementById("step3-content").classList.remove("active");
                     document.getElementById("step4-content").classList.add("active");
-                    document.getElementById("confirmation-name").textContent = appointmentData.studentName;
-                    document.querySelector(".confirmation-success").classList.remove("hidden");
 
-                    document.getElementById("loading-spinner").classList.add("hidden"); // Hide spinner on success
+                    document.getElementById("confirmation-name").textContent = appointmentData.studentName;
+                    document.getElementById("confirmation-professor").textContent = selectedProfessorName;
+                    document.getElementById("confirmation-date").textContent = appointmentData.date;
+                    document.getElementById("confirmation-time").textContent = formatTimeTo12Hour(appointmentData.time);
+                    document.querySelector(".queue-position span").textContent = queuePosition;
+                    document.querySelector(".queue-info p strong").textContent = getEstimatedWaitTime(queuePosition);
+                    document.querySelector(".confirmation-success").classList.remove("hidden");
+                    document.querySelector(".confirmation-details .detail-value.confirmation-code").textContent = confirmationNumber;
+
+                    document.getElementById("loading-spinner").classList.add("hidden");
                 })
                 .catch((error) => {
-                    console.error("Error adding appointment:", error);
+                    console.error("Error saving appointment:", error);
                     alert("Error saving appointment.");
-                    document.getElementById("loading-spinner").classList.add("hidden"); // Hide spinner on failure
+                    document.getElementById("loading-spinner").classList.add("hidden");
                 });
         })
         .catch((error) => {
             console.error("Error checking existing appointments:", error);
             alert("Error checking booking slot availability.");
-            document.getElementById("loading-spinner").classList.add("hidden"); // Hide spinner on error
+            document.getElementById("loading-spinner").classList.add("hidden");
         });
 }
+
+

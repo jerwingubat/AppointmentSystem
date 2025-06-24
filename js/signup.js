@@ -2,7 +2,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyBRIyuxDhndABeMJng-fJRZJPaX_R7g7O8",
     authDomain: "appointment-system-6d7a5.firebaseapp.com",
     projectId: "appointment-system-6d7a5",
-    storageBucket: "appointment-system-6d7a5.appspot.com", // Not used here
+    storageBucket: "appointment-system-6d7a5.appspot.com",
     messagingSenderId: "764916211566",
     appId: "1:764916211566:web:551c88b55cba38ba446b7f",
     measurementId: "G-PF964W9HCQ"
@@ -12,7 +12,7 @@ const app = firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let base64Image = ""; // Base64 image string to store in Firestore
+let base64Image = "";
 
 document.addEventListener("DOMContentLoaded", () => {
     const signupForm = document.getElementById("signup-form");
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const reader = new FileReader();
             reader.onload = function (e) {
-                base64Image = e.target.result; // Store Base64 string
+                base64Image = e.target.result;
                 preview.src = base64Image;
                 preview.style.display = "block";
             };
@@ -61,21 +61,18 @@ document.addEventListener("DOMContentLoaded", () => {
             .then((userCredential) => {
                 const user = userCredential.user;
 
-                // Note: Skipping user.updateProfile() to avoid 'photoURL too long' error
-
-                // Save user info including Base64 profile picture in Firestore
                 return db.collection('users').doc(user.uid).set({
                     uid: user.uid,
                     firstName: firstName,
                     lastName: lastName,
                     email: email,
-                    profilePicBase64: base64Image, // store Base64 string here
+                    profilePicBase64: base64Image,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             })
             .then(() => {
                 alert("Account created successfully with Base64 profile picture stored in Firestore!");
-                window.location.href = "/index.html"; // redirect to your desired page
+                window.location.href = "/index.html";
             })
             .catch((error) => {
                 console.error("Signup Error:", error);

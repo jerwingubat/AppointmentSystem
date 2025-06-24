@@ -560,3 +560,13 @@ td {
         width: 100%;
     }
 }
+
+.action-btn.done-btn {
+    background-color: #4BB543;
+    color: white;
+}
+
+.action-btn.reject-btn {
+    background-color: #E74C3C;
+    color: white;
+}
