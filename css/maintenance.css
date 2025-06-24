@@ -1,0 +1,34 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.maintenance-container {
+    text-align: center;
+    background: white;
+    padding: 40px 60px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.maintenance-container h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.maintenance-container p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.maintenance-container a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: 500;
+}
