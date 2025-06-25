@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
+        document.getElementById("spinner-overlay").style.display = "flex";
 
         auth.signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
@@ -31,6 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch((error) => {
                 console.error("Login error:", error);
                 alert("Login failed: " + error.message);
+            })
+            .finally(() => {
+                document.getElementById("spinner-overlay").style.display = "none";
             });
     });
 });

@@ -91,7 +91,7 @@ function loadFinishedAppointments(professorId, direction = 'next') {
     if (direction === 'next' && finishedLastVisible) {
         query = query.startAfter(finishedLastVisible);
     } else if (direction === 'prev' && finishedPageStack.length > 1) {
-    
+
         finishedPageStack.pop();
         const prevStartAt = finishedPageStack[finishedPageStack.length - 1];
         query = query.startAt(prevStartAt);
@@ -153,9 +153,10 @@ function loadAppointments(professorId) {
     tableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
 
     db.collection('users').doc(professorId).collection('appointments')
-        .get()
-        .then(snapshot => {
+        .onSnapshot(snapshot => {
+            const tableBody = document.querySelector('.appointments-table tbody');
             tableBody.innerHTML = '';
+
             if (snapshot.empty) {
                 tableBody.innerHTML = '<tr><td colspan="5">No appointments found.</td></tr>';
                 return;
@@ -163,50 +164,36 @@ function loadAppointments(professorId) {
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-
-                const studentName = data.studentName || 'Unknown Student';
-                const studentId = data.studentID || 'N/A';
-                const time = data.time || 'Not set';
-                const date = data.date || 'Not set';
-                const purpose = data.purpose || 'No purpose';
-                const confirmation = data.confirmationNumber || 'N/A';
-
                 const row = `
-                    <tr>
-                        <td>
-                            <div class="student-info">
-                                <div class="student-avatar">${getInitials(studentName)}</div>
-                                <div>
-                                    <div class="student-name">${studentName}</div>
-                                    <div class="student-id">ID: ${studentId}</div>
-                                </div>
+                <tr>
+                    <td>
+                        <div class="student-info">
+                            <div class="student-avatar">${getInitials(data.studentName || 'N/A')}</div>
+                            <div>
+                                <div class="student-name">${data.studentName || 'Unknown Student'}</div>
+                                <div class="student-id">ID: ${data.studentID || 'N/A'}</div>
                             </div>
-                        </td>
-                        <td>
-                            <div class="appointment-time">${time}</div>
-                            <div class="appointment-date">${date}</div>
-                        </td>
-                        <td>
-                            <span class="appointment-purpose">${purpose}</span>
-                        </td>
-                        <td>
-                            <span class="confirmation-number">${confirmation}</span>
-                        </td>
-                        <td>
-                            <button class="action-btn done-btn" data-id="${doc.id}">Done</button>
-                            <button class="action-btn reject-btn" data-id="${doc.id}">Reject</button>
-                        </td>
-                    </tr>
-                `;
+                        </div>
+                    </td>
+                    <td>
+                        <div class="appointment-time">${data.time || '-'}</div>
+                        <div class="appointment-date">${data.date || '-'}</div>
+                    </td>
+                    <td>${data.purpose || '-'}</td>
+                    <td>${data.confirmationNumber || 'N/A'}</td>
+                    <td>
+                        <button class="action-btn done-btn" data-id="${doc.id}">Done</button>
+                        <button class="action-btn reject-btn" data-id="${doc.id}">Reject</button>
+                    </td>
+                </tr>
+            `;
                 tableBody.innerHTML += row;
             });
 
             attachActionButtons();
-        })
-        .catch(error => {
-            console.error('Error loading appointments:', error);
-            tableBody.innerHTML = '<tr><td colspan="5">Failed to load appointments.</td></tr>';
+            updateDashboardCards(professorId);
         });
+
 }
 document.querySelector('.appointments-link').addEventListener('click', () => {
     document.querySelector('.appointments-table').style.display = 'block';
@@ -242,8 +229,7 @@ function updateDashboardCards(professorId) {
     db.collection('users')
         .doc(professorId)
         .collection('appointments')
-        .get()
-        .then(snapshot => {
+        .onSnapshot(snapshot => {
             let upcomingCount = 0;
             let todayCount = 0;
 
@@ -271,7 +257,7 @@ function updateDashboardCards(professorId) {
         .get()
         .then(snapshot => {
             const pendingCount = snapshot.size;
-            document.querySelector('.card:nth-child(2) .card-value').textContent = pendingCount; // Pending
+            document.querySelector('.card:nth-child(2) .card-value').textContent = pendingCount;
         });
 }
 
