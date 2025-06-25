@@ -18,6 +18,7 @@ let selectedProfessorId = null;
 let selectedProfessorName = "";
 let selectedDate = "";
 let selectedTime = "";
+let slotUnsubscribe = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     loadProfessors();
@@ -86,19 +87,17 @@ function loadProfessors() {
     const professorGrid = document.getElementById('professor-grid');
     professorGrid.innerHTML = '<p>Loading users...</p>';
 
-    db.collection("users").get()
-        .then((snapshot) => {
-            professorGrid.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const card = createProfessorCard(doc.id, data);
-                professorGrid.appendChild(card);
-            });
-        })
-        .catch((error) => {
-            console.error("Error loading users:", error);
-            professorGrid.innerHTML = '<p>Error loading users.</p>';
+    db.collection("users").onSnapshot((snapshot) => {
+        professorGrid.innerHTML = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const card = createProfessorCard(doc.id, data);
+            professorGrid.appendChild(card);
         });
+    }, (error) => {
+        console.error("Error loading users:", error);
+        professorGrid.innerHTML = '<p>Error loading users.</p>';
+    });
 }
 
 function createProfessorCard(id, data) {
@@ -151,7 +150,7 @@ function createProfessorCard(id, data) {
             selectedProfessorId = id;
             selectedProfessorName = name;
             document.getElementById("step1-next").disabled = false;
-            enableTimeSlotSelection(); // reload time slots
+            enableTimeSlotSelection();
         });
     }
     return card;
@@ -222,46 +221,59 @@ function formatTimeTo12Hour(time24) {
 
 function enableTimeSlotSelection() {
     const timeSlots = document.querySelectorAll('.time-slot');
+
+    if (slotUnsubscribe) slotUnsubscribe();
+
     timeSlots.forEach(slot => {
         slot.classList.remove('selected', 'unavailable');
-        const time = slot.getAttribute('data-time');
-        const formattedTime = formatTimeTo12Hour(time);
-        slot.textContent = `${formattedTime} (Loading...)`;
         slot.disabled = true;
-
-        if (selectedProfessorId && selectedDate) {
-            const appointmentsRef = db.collection("users").doc(selectedProfessorId).collection("appointments");
-            appointmentsRef
-                .where("date", "==", selectedDate)
-                .where("time", "==", time)
-                .get()
-                .then((querySnapshot) => {
-                    const remaining = MAX_SLOTS_PER_TIME - querySnapshot.size;
-                    slot.textContent = `${formattedTime} (${remaining} slots left)`;
-
-                    if (remaining <= 0) {
-                        slot.classList.add('unavailable');
-                        slot.disabled = true;
-                    } else {
-                        slot.disabled = false;
-                        slot.addEventListener('click', () => {
-                            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-                            slot.classList.add('selected');
-                            selectedTime = time;
-                            document.getElementById("step2-next").disabled = false;
-                        });
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error loading time slot:", error);
-                    slot.textContent = `${time} (Error)`;
-                });
-        }
+        const time = slot.getAttribute('data-time');
+        slot.textContent = `${formatTimeTo12Hour(time)} (Loading...)`;
     });
+
+    if (!selectedProfessorId || !selectedDate) return;
+
+    const appointmentsRef = db.collection("users").doc(selectedProfessorId).collection("appointments");
+
+    slotUnsubscribe = appointmentsRef
+        .where("date", "==", selectedDate)
+        .onSnapshot((snapshot) => {
+            const slotCounts = {};
+
+            snapshot.forEach(doc => {
+                const time = doc.data().time;
+                slotCounts[time] = (slotCounts[time] || 0) + 1;
+            });
+
+            timeSlots.forEach(slot => {
+                const time = slot.getAttribute('data-time');
+                const count = slotCounts[time] || 0;
+                const remaining = MAX_SLOTS_PER_TIME - count;
+                const formattedTime = formatTimeTo12Hour(time);
+
+                slot.textContent = `${formattedTime} (${remaining} slots left)`;
+                slot.classList.remove('unavailable', 'selected');
+                slot.disabled = remaining <= 0;
+
+                if (remaining <= 0) {
+                    slot.classList.add('unavailable');
+                } else {
+                    slot.addEventListener('click', () => {
+                        document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                        slot.classList.add('selected');
+                        selectedTime = time;
+                        document.getElementById("step2-next").disabled = false;
+                    });
+                }
+            });
+        }, (error) => {
+            console.error("Error listening to time slots:", error);
+        });
 }
 
+
 function getEstimatedWaitTime(position) {
-    const avgTimePerPerson = 10; // in minutes
+    const avgTimePerPerson = 10;
     const wait = (position - 1) * avgTimePerPerson;
     return `${wait}-${wait + avgTimePerPerson} minutes`;
 }
