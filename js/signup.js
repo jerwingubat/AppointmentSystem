@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    signupForm.addEventListener("submit", (e) => {
+    signupForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
         const firstName = document.getElementById("first-name").value.trim();
@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
         const confirmPassword = document.getElementById("confirm-password").value;
+        const secretKey = document.getElementById("secret-key").value.trim();
 
         if (password !== confirmPassword) {
             alert("Passwords do not match.");
@@ -57,26 +58,35 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        auth.createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                const user = userCredential.user;
+        try {
+            const keyQuery = await db.collection("secretKey")
+                .where("value", "==", secretKey)
+                .get();
 
-                return db.collection('users').doc(user.uid).set({
-                    uid: user.uid,
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email,
-                    profilePicBase64: base64Image,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            })
-            .then(() => {
-                alert("Account created successfully!");
-                window.location.href = "/index.html";
-            })
-            .catch((error) => {
-                console.error("Signup Error:", error);
-                alert("Error: " + error.message);
+            if (keyQuery.empty) {
+                alert("Invalid secret key. Please contact the administrator.");
+                return;
+            }
+
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+
+            await db.collection('users').doc(user.uid).set({
+                uid: user.uid,
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                profilePicBase64: base64Image,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            alert("Account created successfully!");
+            window.location.href = "/index.html";
+
+        } catch (error) {
+            console.error("Signup Error:", error);
+            alert("Error: " + error.message);
+        }
     });
+
 });

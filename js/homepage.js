@@ -18,6 +18,7 @@ let selectedProfessorId = null;
 let selectedProfessorName = "";
 let selectedDate = "";
 let selectedTime = "";
+let slotUnsubscribe = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     loadProfessors();
@@ -92,19 +93,17 @@ function loadProfessors() {
     const professorGrid = document.getElementById('professor-grid');
     professorGrid.innerHTML = '<p>Loading users...</p>';
 
-    db.collection("users").get()
-        .then((snapshot) => {
-            professorGrid.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const card = createProfessorCard(doc.id, data);
-                professorGrid.appendChild(card);
-            });
-        })
-        .catch((error) => {
-            console.error("Error loading users:", error);
-            professorGrid.innerHTML = '<p>Error loading users.</p>';
+    db.collection("users").onSnapshot((snapshot) => {
+        professorGrid.innerHTML = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const card = createProfessorCard(doc.id, data);
+            professorGrid.appendChild(card);
         });
+    }, (error) => {
+        console.error("Error loading users:", error);
+        professorGrid.innerHTML = '<p>Error loading users.</p>';
+    });
 }
 
 function createProfessorCard(id, data) {
@@ -231,47 +230,36 @@ function formatTimeTo12Hour(time24) {
 
 function enableTimeSlotSelection() {
     const timeSlots = document.querySelectorAll('.time-slot');
-    const currentSelectedTimeDiv = document.getElementById('current-selected-time');
-    const nextBtn = document.getElementById('step2-next');
-    const nextIndicator = nextBtn.querySelector('.next-indicator');
-    const today = new Date();
-    let isToday = false;
-    if (selectedDate) {
-        const [year, month, day] = selectedDate.split('-').map(Number);
-        isToday = today.getFullYear() === year && (today.getMonth() + 1) === month && today.getDate() === day;
-    }
     timeSlots.forEach(slot => {
         slot.classList.remove('selected', 'unavailable');
-        // Remove any previous indicator
-        const indicator = slot.querySelector('.selected-indicator');
-        if (indicator) indicator.remove();
         const time = slot.getAttribute('data-time');
         const formattedTime = formatTimeTo12Hour(time);
         slot.textContent = `${formattedTime} (Loading...)`;
         slot.disabled = true;
 
-        // Disable if time is in the past for today
-        if (isToday) {
-            const [slotHour, slotMinute] = time.split(':').map(Number);
-            const nowHour = today.getHours();
-            const nowMinute = today.getMinutes();
-            if (slotHour < nowHour || (slotHour === nowHour && slotMinute <= nowMinute)) {
-                slot.classList.add('unavailable');
-                slot.textContent = `${formattedTime} (Past)`;
-                slot.disabled = true;
-                return;
-            }
-        }
+    if (!selectedProfessorId || !selectedDate) return;
 
-        if (selectedProfessorId && selectedDate) {
-            const appointmentsRef = db.collection("users").doc(selectedProfessorId).collection("appointments");
-            appointmentsRef
-                .where("date", "==", selectedDate)
-                .where("time", "==", time)
-                .get()
-                .then((querySnapshot) => {
-                    const remaining = MAX_SLOTS_PER_TIME - querySnapshot.size;
-                    slot.textContent = `${formattedTime} (${remaining} slots left)`;
+    const appointmentsRef = db.collection("users").doc(selectedProfessorId).collection("appointments");
+
+    slotUnsubscribe = appointmentsRef
+        .where("date", "==", selectedDate)
+        .onSnapshot((snapshot) => {
+            const slotCounts = {};
+
+            snapshot.forEach(doc => {
+                const time = doc.data().time;
+                slotCounts[time] = (slotCounts[time] || 0) + 1;
+            });
+
+            timeSlots.forEach(slot => {
+                const time = slot.getAttribute('data-time');
+                const count = slotCounts[time] || 0;
+                const remaining = MAX_SLOTS_PER_TIME - count;
+                const formattedTime = formatTimeTo12Hour(time);
+
+                slot.textContent = `${formattedTime} (${remaining} slots left)`;
+                slot.classList.remove('unavailable', 'selected');
+                slot.disabled = remaining <= 0;
 
                     if (remaining <= 0) {
                         slot.classList.add('unavailable');
@@ -279,23 +267,10 @@ function enableTimeSlotSelection() {
                     } else {
                         slot.disabled = false;
                         slot.addEventListener('click', () => {
-                            document.querySelectorAll('.time-slot').forEach(s => {
-                                s.classList.remove('selected');
-                                const ind = s.querySelector('.selected-indicator');
-                                if (ind) ind.remove();
-                            });
+                            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
                             slot.classList.add('selected');
                             selectedTime = time;
                             document.getElementById("step2-next").disabled = false;
-                            currentSelectedTimeDiv.textContent = `Selected Time: ${formattedTime}`;
-                            currentSelectedTimeDiv.style.display = 'block';
-                            // Add indicator
-                            const check = document.createElement('span');
-                            check.className = 'selected-indicator';
-                            check.textContent = '✓';
-                            slot.appendChild(check);
-                            // Show next indicator
-                            nextIndicator.style.display = 'inline-block';
                         });
                     }
                 })
@@ -305,24 +280,11 @@ function enableTimeSlotSelection() {
                 });
         }
     });
-    // Hide the selected time if nothing is selected
-    if (!selectedTime) {
-        currentSelectedTimeDiv.style.display = 'none';
-        currentSelectedTimeDiv.textContent = 'Selected Time: ';
-        nextIndicator.style.display = 'none';
-    }
 }
 
-function clearSelectedTimeDisplay() {
-    selectedTime = '';
-    const currentSelectedTimeDiv = document.getElementById('current-selected-time');
-    currentSelectedTimeDiv.style.display = 'none';
-    currentSelectedTimeDiv.textContent = 'Selected Time: ';
-    document.getElementById("step2-next").disabled = true;
-}
 
 function getEstimatedWaitTime(position) {
-    const avgTimePerPerson = 10; // in minutes
+    const avgTimePerPerson = 10;
     const wait = (position - 1) * avgTimePerPerson;
     return `${wait}-${wait + avgTimePerPerson} minutes`;
 }
