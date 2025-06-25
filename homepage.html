@@ -13,6 +13,9 @@
 <body>
     <header>
         <div class="container">
+            <!--<div class="brand-logo" style="margin-bottom: 10px;">
+                <img src="/favicon.ico" alt="DCS Logo" style="height: 48px; width: 48px; border-radius: 12px; box-shadow: 0 2px 8px rgba(44,62,80,0.08); background: #fff;" />
+            </div> -->
             <div class="logo">DCS Booking System</div>
             <div class="tagline">Thesis Consultation and Other inquiries</div>
         </div>
@@ -116,7 +119,7 @@
 
                     </div>
                 </div>
-                
+                <div id="current-selected-time" style="margin: 18px 0 0 0; font-weight: 600; color: var(--primary); font-size: 1.1rem; display: none;">Selected Time: </div>
                 <div class="time-slots">
                     <h3>Available Time Slots for <span id="selected-date">Today</span></h3>
                     <div class="time-slots-grid" id="time-slots-grid">
@@ -131,7 +134,7 @@
                 
                 <div class="action-buttons">
                     <button class="btn btn-outline" id="step2-back">Back</button>
-                    <button class="btn btn-primary" id="step2-next" disabled>Next</button>
+                    <button class="btn btn-primary" id="step2-next" disabled><span class="next-indicator" style="display:none;">✓</span> Next</button>
                 </div>
             </div>
             
@@ -245,5 +248,15 @@
     <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics-compat.js"></script>
     <script src="js/homepage.js"></script>
+    <div id="booking-spinner" class="overlay-spinner hidden">
+        <div class="spinner"></div>
+        <div style="margin-top: 18px; color: var(--gray); font-size: 1.08rem;">Processing your booking...</div>
+    </div>
+    <div id="custom-alert" class="custom-alert hidden">
+        <div class="custom-alert-content">
+            <span id="custom-alert-message"></span>
+            <button id="custom-alert-ok">OK</button>
+        </div>
+    </div>
 </body>
 </html>

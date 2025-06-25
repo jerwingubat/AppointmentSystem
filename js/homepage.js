@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("step1-content").classList.remove("active");
             document.getElementById("step2-content").classList.add("active");
             document.getElementById("selected-professor-name").textContent = selectedProfessorName;
+            setStepIndicator(1);
         }
     });
 
@@ -37,9 +38,10 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("step3-content").classList.add("active");
             document.getElementById("confirm-professor").textContent = selectedProfessorName;
             document.getElementById("confirm-date").textContent = selectedDate;
-            document.getElementById("confirm-time").textContent = selectedTime;
+            document.getElementById("confirm-time").textContent = formatTimeTo12Hour(selectedTime);
+            setStepIndicator(2);
         } else {
-            alert("Please select a date and time.");
+            showCustomAlert("Please select a date and time.");
         }
     });
 
@@ -50,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const appointmentPurpose = document.getElementById("appointment-purpose").value;
 
         if (!studentName || !studentID || !selectedDate || !selectedTime) {
-            alert("Please complete all required fields.");
+            showCustomAlert("Please complete all required fields.");
             return;
         }
 
@@ -64,17 +66,21 @@ document.addEventListener("DOMContentLoaded", () => {
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
 
+        setStepIndicator(3);
+        document.getElementById('booking-spinner').classList.remove('hidden');
         saveAppointment(selectedProfessorId, appointmentData);
     });
 
     document.getElementById("step2-back").addEventListener("click", () => {
         document.getElementById("step2-content").classList.remove("active");
         document.getElementById("step1-content").classList.add("active");
+        setStepIndicator(0);
     });
 
     document.getElementById("step3-back").addEventListener("click", () => {
         document.getElementById("step3-content").classList.remove("active");
         document.getElementById("step2-content").classList.add("active");
+        setStepIndicator(1);
     });
 
     document.getElementById("new-booking").addEventListener("click", () => {
@@ -151,7 +157,8 @@ function createProfessorCard(id, data) {
             selectedProfessorId = id;
             selectedProfessorName = name;
             document.getElementById("step1-next").disabled = false;
-            enableTimeSlotSelection(); // reload time slots
+            enableTimeSlotSelection();
+            clearSelectedTimeDisplay();
         });
     }
     return card;
@@ -186,7 +193,8 @@ function generateCalendar(date) {
 
             const today = new Date();
             const thisDate = new Date(year, month, day);
-            if (thisDate < today) {
+            const dayOfWeek = thisDate.getDay();
+            if (thisDate < today || dayOfWeek === 0 || dayOfWeek === 6) { // 0: Sunday, 6: Saturday
                 dayElem.classList.add('disabled');
             } else {
                 dayElem.addEventListener('click', () => {
@@ -195,6 +203,7 @@ function generateCalendar(date) {
                     selectedDate = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
                     document.getElementById('selected-date').textContent = selectedDate;
                     enableTimeSlotSelection();
+                    clearSelectedTimeDisplay();
                 });
             }
             calendarDays.appendChild(dayElem);
@@ -222,12 +231,37 @@ function formatTimeTo12Hour(time24) {
 
 function enableTimeSlotSelection() {
     const timeSlots = document.querySelectorAll('.time-slot');
+    const currentSelectedTimeDiv = document.getElementById('current-selected-time');
+    const nextBtn = document.getElementById('step2-next');
+    const nextIndicator = nextBtn.querySelector('.next-indicator');
+    const today = new Date();
+    let isToday = false;
+    if (selectedDate) {
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        isToday = today.getFullYear() === year && (today.getMonth() + 1) === month && today.getDate() === day;
+    }
     timeSlots.forEach(slot => {
         slot.classList.remove('selected', 'unavailable');
+        // Remove any previous indicator
+        const indicator = slot.querySelector('.selected-indicator');
+        if (indicator) indicator.remove();
         const time = slot.getAttribute('data-time');
         const formattedTime = formatTimeTo12Hour(time);
         slot.textContent = `${formattedTime} (Loading...)`;
         slot.disabled = true;
+
+        // Disable if time is in the past for today
+        if (isToday) {
+            const [slotHour, slotMinute] = time.split(':').map(Number);
+            const nowHour = today.getHours();
+            const nowMinute = today.getMinutes();
+            if (slotHour < nowHour || (slotHour === nowHour && slotMinute <= nowMinute)) {
+                slot.classList.add('unavailable');
+                slot.textContent = `${formattedTime} (Past)`;
+                slot.disabled = true;
+                return;
+            }
+        }
 
         if (selectedProfessorId && selectedDate) {
             const appointmentsRef = db.collection("users").doc(selectedProfessorId).collection("appointments");
@@ -245,10 +279,23 @@ function enableTimeSlotSelection() {
                     } else {
                         slot.disabled = false;
                         slot.addEventListener('click', () => {
-                            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                            document.querySelectorAll('.time-slot').forEach(s => {
+                                s.classList.remove('selected');
+                                const ind = s.querySelector('.selected-indicator');
+                                if (ind) ind.remove();
+                            });
                             slot.classList.add('selected');
                             selectedTime = time;
                             document.getElementById("step2-next").disabled = false;
+                            currentSelectedTimeDiv.textContent = `Selected Time: ${formattedTime}`;
+                            currentSelectedTimeDiv.style.display = 'block';
+                            // Add indicator
+                            const check = document.createElement('span');
+                            check.className = 'selected-indicator';
+                            check.textContent = '✓';
+                            slot.appendChild(check);
+                            // Show next indicator
+                            nextIndicator.style.display = 'inline-block';
                         });
                     }
                 })
@@ -258,6 +305,20 @@ function enableTimeSlotSelection() {
                 });
         }
     });
+    // Hide the selected time if nothing is selected
+    if (!selectedTime) {
+        currentSelectedTimeDiv.style.display = 'none';
+        currentSelectedTimeDiv.textContent = 'Selected Time: ';
+        nextIndicator.style.display = 'none';
+    }
+}
+
+function clearSelectedTimeDisplay() {
+    selectedTime = '';
+    const currentSelectedTimeDiv = document.getElementById('current-selected-time');
+    currentSelectedTimeDiv.style.display = 'none';
+    currentSelectedTimeDiv.textContent = 'Selected Time: ';
+    document.getElementById("step2-next").disabled = true;
 }
 
 function getEstimatedWaitTime(position) {
@@ -266,13 +327,24 @@ function getEstimatedWaitTime(position) {
     return `${wait}-${wait + avgTimePerPerson} minutes`;
 }
 
-function generateConfirmationNumber() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
+function generateConfirmationNumber(studentID) {
+    return `DCS-${studentID}`;
+}
+
+function showCustomAlert(message) {
+    const alertBox = document.getElementById('custom-alert');
+    const alertMsg = document.getElementById('custom-alert-message');
+    const alertOk = document.getElementById('custom-alert-ok');
+    alertMsg.textContent = message;
+    alertBox.classList.remove('hidden');
+    alertOk.focus();
+    function closeAlert() {
+        alertBox.classList.add('hidden');
+        alertOk.removeEventListener('click', closeAlert);
     }
-    return `DCS-${result}`;
+    alertOk.addEventListener('click', closeAlert);
+    // Also close on Enter key
+    alertOk.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { closeAlert(); } };
 }
 
 function saveAppointment(professorId, appointmentData) {
@@ -280,7 +352,7 @@ function saveAppointment(professorId, appointmentData) {
 
     const appointmentsRef = db.collection("users").doc(professorId).collection("appointments");
 
-    const confirmationNumber = generateConfirmationNumber();
+    const confirmationNumber = generateConfirmationNumber(appointmentData.studentID);
 
     appointmentsRef
         .where("date", "==", appointmentData.date)
@@ -291,8 +363,9 @@ function saveAppointment(professorId, appointmentData) {
             const currentCount = querySnapshot.size;
 
             if (currentCount >= MAX_SLOTS_PER_TIME) {
-                alert("Sorry, this time slot is fully booked. Please select another time.");
+                showCustomAlert("Sorry, this time slot is fully booked. Please select another time.");
                 document.getElementById("loading-spinner").classList.add("hidden");
+                document.getElementById("booking-spinner").classList.add("hidden");
                 return;
             }
             const queuePosition = currentCount + 1;
@@ -317,18 +390,38 @@ function saveAppointment(professorId, appointmentData) {
                     document.querySelector(".confirmation-details .detail-value.confirmation-code").textContent = confirmationNumber;
 
                     document.getElementById("loading-spinner").classList.add("hidden");
+                    document.getElementById("booking-spinner").classList.add("hidden");
                 })
                 .catch((error) => {
                     console.error("Error saving appointment:", error);
-                    alert("Error saving appointment.");
+                    showCustomAlert("Error saving appointment.");
                     document.getElementById("loading-spinner").classList.add("hidden");
+                    document.getElementById("booking-spinner").classList.add("hidden");
                 });
         })
         .catch((error) => {
             console.error("Error checking existing appointments:", error);
-            alert("Error checking booking slot availability.");
+            showCustomAlert("Error checking booking slot availability.");
             document.getElementById("loading-spinner").classList.add("hidden");
+            document.getElementById("booking-spinner").classList.add("hidden");
         });
+}
+
+function setStepIndicator(step) {
+    const steps = [
+        document.getElementById('step1-indicator'),
+        document.getElementById('step2-indicator'),
+        document.getElementById('step3-indicator'),
+        document.getElementById('step4-indicator')
+    ];
+    steps.forEach((el, idx) => {
+        el.classList.remove('active', 'completed');
+        if (idx < step) {
+            el.classList.add('completed');
+        } else if (idx === step) {
+            el.classList.add('active');
+        }
+    });
 }
 
 

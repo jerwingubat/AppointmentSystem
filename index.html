@@ -13,6 +13,9 @@
 <body>
     <div class="auth-container">
         <div class="auth-header">
+            <!--<div class="brand-logo" style="margin-bottom: 10px;">
+                <img src="/favicon.ico" alt="DCS Logo" style="height: 48px; width: 48px; border-radius: 12px; box-shadow: 0 2px 8px rgba(44,62,80,0.08); background: #fff;" />
+            </div> -->
             <h1>Welcome Back</h1>
             <p>Login to access your account</p>
         </div>
@@ -80,6 +83,11 @@
     <a href="homepage.html" class="home-btn" title="Go to Homepage">
         <i class="fas fa-home"></i>
     </a>
+
+    <div id="login-spinner" class="overlay-spinner hidden">
+        <div class="spinner"></div>
+        <div style="margin-top: 18px; color: var(--gray); font-size: 1.08rem;">Processing login...</div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore-compat.js"></script>
