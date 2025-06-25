@@ -461,6 +461,4 @@ document.querySelector('.logout-link').addEventListener('click', (e) => {
         });
 });
 
-document.querySelector('.notification').addEventListener('click', function () {
-    this.querySelector('.notification-badge').style.display = 'none';
-});
+

@@ -193,7 +193,7 @@ function generateCalendar(date) {
             const today = new Date();
             const thisDate = new Date(year, month, day);
             const dayOfWeek = thisDate.getDay();
-            if (thisDate < today || dayOfWeek === 0 || dayOfWeek === 6) { // 0: Sunday, 6: Saturday
+            if (thisDate < today || dayOfWeek === 0 || dayOfWeek === 6) {
                 dayElem.classList.add('disabled');
             } else {
                 dayElem.addEventListener('click', () => {
