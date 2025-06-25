@@ -194,6 +194,10 @@ h2 {
 .professor-status {
     display: flex;
     align-items: center;
+    font-size: 15px;
+}
+.professor-status-message{
+    display: flex;
     font-size: 13px;
 }
 
