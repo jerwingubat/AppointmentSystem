@@ -278,7 +278,7 @@ function enableTimeSlotSelection() {
                     console.error("Error loading time slot:", error);
                     slot.textContent = `${time} (Error)`;
                 });
-        }
+        });
     });
 }
 
