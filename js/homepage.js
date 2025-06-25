@@ -114,7 +114,7 @@ function createProfessorCard(id, data) {
     const imageBase64 = data.profilePicBase64 || 'default-profile.png';
     const imageUrl = imageBase64.startsWith('data:image') ? imageBase64 : 'default-profile.png';
     const name = `${data.firstName || 'No'} ${data.lastName || 'Name'}`;
-    const department = data.department || 'Unknown Department';
+    const department = data.department || 'Department of Computer Studies';
     const status = data.status || 'Unavailable';
     const statusCustom = data.statusMessage;
 
@@ -133,7 +133,7 @@ function createProfessorCard(id, data) {
         statusText = '● Busy';
     } else if (normalizedStatus === 'away') {
         statusClass = 'status-away';
-        statusText = '● Away';
+        statusText = '● Unavailable';
     } else {
         statusClass = 'status-unavailable';
         statusText = `● ${status}`;

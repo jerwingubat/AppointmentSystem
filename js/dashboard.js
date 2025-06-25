@@ -215,14 +215,14 @@ function loadAppointments(professorId) {
 
     db.collection('users').doc(professorId).collection('appointments')
         .onSnapshot(snapshot => {
-            allAppointments = []; // reset
+            allAppointments = [];
 
             snapshot.forEach(doc => {
                 const data = doc.data();
                 allAppointments.push({ id: doc.id, ...data });
             });
 
-            renderAppointments('all'); // default view
+            renderAppointments('all');
         });
 }
 function renderAppointments(filterType = 'all') {
