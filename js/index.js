@@ -21,17 +21,17 @@ document.addEventListener("DOMContentLoaded", () => {
     loginForm.addEventListener("submit", (e) => {
         e.preventDefault();
 
-        spinner.classList.remove("hidden");
+        //spinner.classList.remove("hidden");
         loginBtn.disabled = true;
         loginBtn.textContent = "Logging in...";
 
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
-        document.getElementById("spinner-overlay").style.display = "flex";
+        //document.getElementById("spinner-overlay").style.display = "flex";
 
         auth.signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
-                spinner.classList.add("hidden");
+                //spinner.classList.add("hidden");
                 loginBtn.disabled = false;
                 loginBtn.textContent = "Login";
                 const user = userCredential.user;
