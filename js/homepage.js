@@ -131,7 +131,7 @@ function createProfessorCard(id, data) {
     } else if (normalizedStatus === 'busy') {
         statusClass = 'status-busy';
         statusText = '● Busy';
-    } else if (normalizedStatus === 'away') {
+    } else if (normalizedStatus === 'unavailable') {
         statusClass = 'status-away';
         statusText = '● Unavailable';
     } else {
